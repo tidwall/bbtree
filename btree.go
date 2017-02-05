@@ -45,7 +45,7 @@
 // Its functions, therefore, exactly mirror those of
 // llrb.LLRB where possible.  Unlike gollrb, though, we currently don't
 // support storing multiple equivalent values.
-package btree
+package bbtree
 
 import (
 	"bytes"
@@ -499,8 +499,7 @@ func (n *node) iterate(dir direction, start, stop []byte, includeStart bool, hit
 	switch dir {
 	case ascend:
 		for i := 0; i < len(n.items); i++ {
-			cr := bytes.Compare(n.items[i], start)
-			if start != nil && cr < 0 {
+			if start != nil && less(n.items[i], start) {
 				continue
 			}
 			if len(n.children) > 0 {
@@ -508,7 +507,7 @@ func (n *node) iterate(dir direction, start, stop []byte, includeStart bool, hit
 					return hit, false
 				}
 			}
-			if !includeStart && !hit && start != nil && cr > 0 {
+			if !includeStart && !hit && start != nil && !less(start, n.items[i]) {
 				hit = true
 				continue
 			}
@@ -527,9 +526,8 @@ func (n *node) iterate(dir direction, start, stop []byte, includeStart bool, hit
 		}
 	case descend:
 		for i := len(n.items) - 1; i >= 0; i-- {
-			cr := bytes.Compare(n.items[i], start)
-			if start != nil && cr >= 0 {
-				if !includeStart || hit || cr > 0 {
+			if start != nil && !less(n.items[i], start) {
+				if !includeStart || hit || less(start, n.items[i]) {
 					continue
 				}
 			}
